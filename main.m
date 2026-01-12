@@ -11,26 +11,9 @@ fprintf('========================================\n\n');
 fprintf('1. 生成传递函数\n');
 fprintf('----------------------------------------\n');
 
-% 可以选择使用默认传递函数或自定义传递函数
-useDefault = input('是否使用默认传递函数? (y/n, 默认: y): ', 's');
-if isempty(useDefault) || lower(useDefault) == 'y'
-    % 使用默认传递函数
-    G = generateTransferFunction();
-else
-    % 自定义传递函数参数
-    fprintf('\n输入传递函数参数:\n');
-
-    % 输入分子多项式系数
-    num_str = input('输入分子系数向量 (例如: [1, 2] 表示 s+2): ', 's');
-    num = str2num(num_str); %#ok<ST2NM>
-
-    % 输入分母多项式系数
-    den_str = input('输入分母系数向量 (例如: [1, 3, 2] 表示 s^2+3s+2): ', 's');
-    den = str2num(den_str); %#ok<ST2NM>
-
-    % 生成传递函数
-    G = generateTransferFunction(num, den);
-end
+num = 2;          % 分子系数
+den = [1, 12, 1];  % 分母系数，按s的降幂排列
+G = tf(num, den)
 
 fprintf('\n按任意键继续...\n');
 pause;
@@ -74,7 +57,34 @@ end
 fprintf('\n\n3. 系统分析\n');
 fprintf('----------------------------------------\n');
 
-% 比较连续和离散系统的阶跃响应
+% 3.1 使用 sysana 类进行系统分析
+fprintf('\n3.1 离散系统特性分析\n');
+fprintf('----------------------------------------\n');
+
+% 对离散系统进行综合分析
+fprintf('\n【离散系统分析】\n');
+sysana.analyzeSystem(Ad, Bd, Cd, false, Ts);
+
+% 获取连续系统状态空间表示
+fprintf('\n按任意键继续连续系统分析...\n');
+pause;
+
+fprintf('\n【连续系统分析】\n');
+sysc = ss(G);  % 转换为连续状态空间
+Ac = sysc.A;
+Bc = sysc.B;
+Cc = sysc.C;
+
+% 对连续系统进行综合分析
+sysana.analyzeSystem(Ac, Bc, Cc, true);
+
+fprintf('\n按任意键继续阶跃响应分析...\n');
+pause;
+
+% 3.2 比较连续和离散系统的阶跃响应
+fprintf('\n3.2 阶跃响应比较\n');
+fprintf('----------------------------------------\n');
+
 figure;
 t_cont = 0:0.01:5;  % 连续时间
 t_disc = 0:Ts:5;     % 离散时间
@@ -108,8 +118,9 @@ ylabel('误差');
 title('离散化误差');
 grid on;
 
-% 计算性能指标
-fprintf('性能指标:\n');
+% 3.3 计算性能指标
+fprintf('\n3.3 性能指标\n');
+fprintf('----------------------------------------\n');
 % 连续系统
 info_cont = stepinfo(G);
 fprintf('连续系统:\n');
